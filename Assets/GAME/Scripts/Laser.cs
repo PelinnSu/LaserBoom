@@ -1,31 +1,48 @@
-﻿using System.Collections;
+﻿using System;
 using UnityEngine;
 
 [RequireComponent(typeof(LineRenderer))]
 public class Laser : MonoBehaviour
 {
     [Header("Beam")]
-    [SerializeField] private float maxLength = 100f;   // total beam length budget
-    [SerializeField] private int maxBounces = 8;       // how many reflections
-    [SerializeField] private LayerMask hitMask = ~0;   // layers the laser can hit
-    [SerializeField] private float surfaceOffset = 0.001f; // avoids self-hit at the surface
-    [SerializeField] private float beamDuration = 1f; // avoids self-hit at the surface
-
+    [SerializeField] private float maxLength = 100f;
+    [SerializeField] private int maxBounces = 8;
+    [SerializeField] private LayerMask hitMask = ~0;
+    [SerializeField] private float surfaceOffset = 0.001f;
     private LineRenderer lr;
-    private Coroutine beamCoroutine;
-
+    private bool isFiring = false;
+    [SerializeField] private Target target;
+    [SerializeField] private Target storedTarget;
     void Awake()
     {
         lr = GetComponent<LineRenderer>();
+        lr.positionCount = 0; // hide initially
     }
 
-    public void DrawLaser(Vector3 origin, Vector3 direction)
+    void Update()
     {
-        // Cancel any existing beam cleanup coroutine
-        if (beamCoroutine != null)
-            StopCoroutine(beamCoroutine);
+        if (isFiring)
+        {
+            DrawLaser(transform.position, transform.forward);
+        }
+    }
 
-        // Actually draw the beam
+    public void StartFiring()
+    {
+        isFiring = true;
+    }
+
+    public void StopFiring()
+    {
+        isFiring = false;
+        lr.positionCount = 0; // clear laser
+        target = null; // reset target
+        if(target==null)
+            storedTarget.StopFillShader();
+    }
+
+    private void DrawLaser(Vector3 origin, Vector3 direction)
+    {
         lr.positionCount = 1;
         lr.SetPosition(0, origin);
 
@@ -39,8 +56,14 @@ public class Laser : MonoBehaviour
                 lr.positionCount++;
                 lr.SetPosition(lr.positionCount - 1, hit.point);
 
+                target = hit.collider.GetComponent<Target>();
+                if (target != null)
+                {
+                    target.StartFillShader(); // start filling shader on hit
+                    storedTarget = target; // store the target to call the target in StopFiring
+                }
+              
                 remaining -= hit.distance;
-
                 direction = Vector3.Reflect(direction, hit.normal).normalized;
                 origin = hit.point + direction * surfaceOffset;
                 bounces++;
@@ -52,22 +75,5 @@ public class Laser : MonoBehaviour
             lr.SetPosition(lr.positionCount - 1, endPoint);
             break;
         }
-
-        if (bounces > maxBounces && remaining > 0f)
-        {
-            Vector3 endPoint = origin + direction * remaining;
-            lr.positionCount++;
-            lr.SetPosition(lr.positionCount - 1, endPoint);
-        }
-
-        // Start the cleanup coroutine
-        beamCoroutine = StartCoroutine(ClearBeamAfterDelay());
-    }
-
-    private IEnumerator ClearBeamAfterDelay()
-    {
-        yield return new WaitForSeconds(beamDuration);
-        lr.positionCount = 0; // clears the beam
-        beamCoroutine = null;
     }
 }
