@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -6,6 +6,7 @@ using UnityEngine.InputSystem;
 [RequireComponent(typeof(CharacterController))]
 public class PlayerController : MonoBehaviour
 {
+    [Header("Moving")]
     [SerializeField] private float maxSpeed = 5f;
     [SerializeField] private float rotationSpeed = 360f;
     [SerializeField] private float accelerationFactor = 5f;
@@ -28,6 +29,9 @@ public class PlayerController : MonoBehaviour
 
     private CharacterController _characterController;
     private InputSystem_Actions _playerInputActions;
+    
+    public static event Action OnPlayerMoving;
+    public static event Action OnPlayerStop;
     private void Awake()
     {
         _playerInputActions = new InputSystem_Actions();
@@ -99,13 +103,23 @@ public class PlayerController : MonoBehaviour
         if (_isDashing)
         {
             _characterController.Move(transform.forward * dashingSpeed * Time.deltaTime);
+            OnPlayerMoving?.Invoke(); 
             return;
         }
 
         Vector3 moveDirection = transform.forward * _currentSpeed * Time.deltaTime + _velocity;
-
         _characterController.Move(moveDirection);
+
+        if (_input != Vector3.zero && _currentSpeed > 0)
+        {
+            OnPlayerMoving?.Invoke();
+        }
+        else
+        {
+            OnPlayerStop?.Invoke();
+        }
     }
+
 
     private void GatherInput()
     {
@@ -113,4 +127,6 @@ public class PlayerController : MonoBehaviour
         _input = new Vector3(input.x, 0, input.y);
         _dashInput = _playerInputActions.Player.Sprint.IsPressed();
     }
+
+    
 }

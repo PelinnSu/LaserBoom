@@ -1,5 +1,7 @@
+using System;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Events;
 
 public class PlayerWaypointCounter : MonoBehaviour
 {
@@ -13,6 +15,8 @@ public class PlayerWaypointCounter : MonoBehaviour
     private int currentWaypointIndex = 0;
     private int lapCount = 0;
     [SerializeField] private TextMeshPro textMesh;
+
+    public static event Action AllLapsFinishedAction;
 
     private void Update()
     {
@@ -34,6 +38,7 @@ public class PlayerWaypointCounter : MonoBehaviour
 
                 if (lapCount >= lapsToComplete)
                 {
+                    AllLapsFinishedAction?.Invoke();
                     Debug.Log("Player completed all laps!");
                 }
             }
