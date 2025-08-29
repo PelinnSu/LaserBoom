@@ -36,9 +36,9 @@ public class Laser : MonoBehaviour
     {
         isFiring = false;
         lr.positionCount = 0; // clear laser
-        target = null; // reset target
-        if(target==null)
-            storedTarget.StopFillShader();
+        //target = null; // reset target
+        //if(target==null)
+        //    storedTarget.StopFillShader();
     }
 
     private void DrawLaser(Vector3 origin, Vector3 direction)
@@ -56,12 +56,12 @@ public class Laser : MonoBehaviour
                 lr.positionCount++;
                 lr.SetPosition(lr.positionCount - 1, hit.point);
 
-                target = hit.collider.GetComponent<Target>();
-                if (target != null)
-                {
-                    target.StartFillShader(); // start filling shader on hit
-                    storedTarget = target; // store the target to call the target in StopFiring
-                }
+                //target = hit.collider.GetComponent<Target>();
+                //if (target != null)
+                //{
+                //    target.StartFillShader(); // start filling shader on hit
+                //    storedTarget = target; // store the target to call the target in StopFiring
+                //}
               
                 remaining -= hit.distance;
                 direction = Vector3.Reflect(direction, hit.normal).normalized;
